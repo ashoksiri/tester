@@ -1,44 +1,32 @@
 <breadcrumb></breadcrumb>
-<div>
-  <mat-tab-group (selectedTabChange)="tabChanged($event)" [selectedIndex]="selectedTab" mat-align-tabs="start"
-                 mat-stretch-tabs="false">
-    <mat-tab *ngFor="let tab of tabs;let i=index" [label]='tab.header'>
-      <br>
-      <div *ngIf="tab.id=='facility' else other">
-        <div [formGroup]="searchForm" class="w-3/4 flex justify-start items-center gap-4 h-12">
-          <mat-form-field appearance="outline" class="dense-3 w-2/4">
-            <mat-label>Facility Number/ Broker Name/ Broker CID</mat-label>
-            <input [(ngModel)]="data.input" [matAutocomplete]="auto" formControlName="input" matInput>
-            <mat-autocomplete #auto="matAutocomplete" autoActiveFirstOption>
-              <mat-option *ngFor="let option of autoFillOptions" [value]="option">{{option}}</mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="dense-3">
-            <mat-label>Business Date</mat-label>
-            <mat-select [(ngModel)]="data.date" formControlName="businessDate">
-              <mat-option *ngFor="let data of businessDates " [value]="data">{{data}}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <button (click)="search()" color="primary" mat-raised-button style="color: white;">Search</button>
-        </div>
-      </div>
-      <ng-template #other>
-        <div class="grid grid-cols-6 gap-4">
-          <ng-container *ngFor="let filter of filters">
-            <div *ngIf="searchForm.value[filter.key]" class="flex justify-start">
-              <p class="font-sans font-bold">{{ filter.header }} :</p>
-              <p class="font-sans">&nbsp;{{searchForm.value[filter.key] }}</p>
-            </div>
-          </ng-container>
-        </div>
-      </ng-template>
-    </mat-tab>
-  </mat-tab-group>
+<div class="flex justify-between">
+  <div class="flex justify-start items-center gap-2">
+    <mat-form-field appearance="fill">
+      <mat-label>Business Date</mat-label>
+      <mat-select [(ngModel)]="search.cob">
+        <mat-option *ngFor="let data of businessDates | async" [value]="data">{{data}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-icon (click)="refresh()">refresh</mat-icon>
+    <mat-icon customToolTip [contentTemplate]="template" [offsetX]="180" [offsetY]="30">info</mat-icon>
+    <ng-template #template>
+      <mat-card>
+        <mat-card-title class="px-4">Note</mat-card-title>
+        <mat-card-content>
+          <ul class="list-disc pl-4">
+            <li *ngFor="let tip of toolTipInfo" class="pb-1">{{tip.text}}
+              <mat-chip [style.background-color]="tip.color" *ngIf="tip.color !== ''">{{ tip.color}}</mat-chip>
+            </li>
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    </ng-template>
+  </div>
 </div>
 <app-template-grid
-  *ngIf="dataFetched"
   (export)="export($event)"
-  [rowData]="tabs[selectedTab].rowData$"
+  [rowData]="rowData"
   [gridOptions]="gridOptions"
   [defaultColDef]="defaultColDef"
-  [columnDefs]="tabs[selectedTab].columnDefs"></app-template-grid>
+  [columnDefs]="columnDefs"></app-template-grid>
+
