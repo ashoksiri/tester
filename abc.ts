@@ -1,67 +1,61 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {ColDef, GridOptions} from "ag-grid-community";
-import {CommonModule} from "@angular/common";
-import {SharedModule} from "@shared";
-import {Observable} from "rxjs";
-import {AgGridAngular} from "ag-grid-angular";
+import {Component, OnInit} from '@angular/core';
+import {FormControl, FormGroup} from '@angular/forms';
+import {GlobalConstants, ITab} from '@core/constant/global-constants';
+import {TemplateMonitorComponent} from "../../templates/template-monitor.component";
+import {CellClickedEvent, ColDef} from "ag-grid-community";
 
 @Component({
-  selector: 'app-template-grid',
-  standalone: true,
-  imports: [
-    CommonModule, SharedModule
-  ],
-  template: `
-    <div class="flex justify-between w-full pt-2 py-1">
-      <div class="w-2/6">
-        <mat-form-field appearance="outline" class="dense-3 w-full">
-          <mat-label>Search Table:-</mat-label>
-          <input id="filter-text-box" matInput (input)="onFilterTextBoxChanged()">
-        </mat-form-field>
-      </div>
-      <div class="flex justify-around">
-        <app-svg-icon icon="excel" [height]="35" [width]="35" (click)="exportOut('xls')"></app-svg-icon>
-        <app-svg-icon icon="pdf" [height]="35" [width]="35" (click)="exportOut('pdf')"></app-svg-icon>
-        <app-svg-icon [height]="35" [width]="35" (click)="exportOut('csv')"></app-svg-icon>
-      </div>
-    </div>
-    <div style="height:fit-content">
-      <ag-grid-angular class="ag-theme-alpine" style="width: 100%; height: 70%;" [rowData]="rowData | async"
-                       [columnDefs]="columnDefs" [gridOptions]="gridOptions" [defaultColDef]="defaultColDef">
-      </ag-grid-angular>
-    </div>
-  `,
+  selector: 'app-monitor',
+  templateUrl: './monitor.component.html'
 })
-export class TemplateGridComponent {
+export class MonitorComponent extends TemplateMonitorComponent implements OnInit {
 
-  @ViewChild(AgGridAngular)
-  agGrid!: AgGridAngular;
+  tabs: ITab[] = [GlobalConstants.tabs[0]]
+  filterTabs: ITab[] = GlobalConstants.tabs;
+  filters = [
+    {key: 'facility', field: 'facility', header: 'Facility',},
+    {key: 'businessDate', field: 'businessDate', header: 'Business Date',},
+    {key: 'brokerCID', field: 'brokerData.broker_CID', header: 'Broker CID',},
+    {key: 'businessLine', field: 'business', header: 'Business',},
+    {key: 'nettingSetId', field: 'netting_Set_', header: 'Netting Set',},
+    {key: 'clientCID', field: 'client_CID', header: 'Client CID',},
+  ];
 
-  @Input({required: true})
-  gridOptions: GridOptions;
-
-  @Input({required: true})
-  defaultColDef: ColDef;
-
-  @Input({required: true})
-  columnDefs: ColDef[] | undefined
-
-  @Input({required: true})
-  rowData: Observable<any[]> | undefined
-
-  @Output()
-  export = new EventEmitter<string>();
-
-  @Output()
-  filterChanged = new EventEmitter();
-
-  exportOut(format: string) {
-    this.export.emit(format);
+  initForm() {
+    this.searchForm = new FormGroup({
+      brokerAccountNumber: new FormControl(),
+      brokerCID: new FormControl(),
+      brokerName: new FormControl(),
+      businessDate: new FormControl(),
+      businessLine: new FormControl(),
+      clientCID: new FormControl(),
+      facility: new FormControl(),
+      fetchingLevel: new FormControl("FACILITY"),
+      nettingSetId: new FormControl(),
+      sftLevel: new FormControl("FL"),
+    });
+    this.searchForm.controls['businessDate'].setValue(this.businessDates[0]);
   }
 
-  onFilterTextBoxChanged() {
-    this.agGrid.api.setQuickFilter(
-      (document.getElementById('filter-text-box') as HTMLInputElement).value
-    );
+  ngOnInit(): void {
+    this.api.businessDates$.subscribe((dates) => {
+      this.businessDates = dates;
+      this.initForm();
+    });
   }
+
+  search(field = 'facility') {
+    console.log(1);
+    const cellOptions: ColDef = {
+      onCellClicked: (event: CellClickedEvent) => {
+        this.mycellClicked(event.colDef.field as string, event.value)
+      },
+      cellStyle: {cursor: 'pointer', textDecoration: 'underline', color: '#9b8c36'}
+    }
+    const columnDefs = GlobalConstants.institutionalHeader.map((col: ColDef) => col.field === field ? ({...col, ...cellOptions}) : col);
+    this.tabs[this.selectedTab].columnDefs = columnDefs;
+    this.tabs[this.selectedTab].rowData$ = this.api.getFacilities(this.searchForm.value);
+    this.dataFetched = true;
+  }
+
 }
