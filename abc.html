@@ -1,41 +1,40 @@
 <breadcrumb></breadcrumb>
-  <div #template>
-    <mat-tab-group mat-stretch-tabs="false" [selectedIndex]="selectedTab" (selectedTabChange)="tabChanged($event)" mat-align-tabs="start">
-      <mat-tab *ngFor="let tab of tabs;let i=index" [label]='tab.header'>
-        <br>
-        <div *ngIf="tab.id=='facility' else other">
-          <div class="flex justify-center items-center gap-4" [formGroup]="searchForm">
-            <mat-form-field appearance="fill" class="sm:w-full md:w-2/4 lg:w-1/4">
-              <mat-label>Input</mat-label>
-              <input matInput formControlName="facility" class="bg-transparente">
-              <button *ngIf="searchForm.value.facility" matSuffix mat-icon-button aria-label="Clear" (click)="searchForm.controls.facility.setValue('')">
-                <mat-icon>close</mat-icon>
-              </button>
-            </mat-form-field>
-            <mat-form-field appearance="fill" class="sm:w-full md:w-2/4 lg:w-1/4">
-              <mat-label>Business Date</mat-label>
-              <mat-select formControlName="businessDate">
-                <mat-option *ngFor="let data of businessDates " [value]="data">{{data}}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <button mat-raised-button color="primary" style="color: white;" (click)="search()">Search</button>
-          </div>
-          <mat-divider style="margin-top: 0.5em;" *ngIf="dataFetched"></mat-divider>
+<div>
+  <mat-tab-group (selectedTabChange)="tabChanged($event)" [selectedIndex]="selectedTab" mat-align-tabs="start"
+                 mat-stretch-tabs="false">
+    <mat-tab *ngFor="let tab of tabs;let i=index" [label]='tab.header'>
+      <br>
+      <div *ngIf="tab.id=='facility' else other">
+        <div [formGroup]="searchForm" class="w-3/4 flex justify-start items-center gap-4 h-12">
+          <mat-form-field appearance="outline" class="dense-3 w-2/4">
+            <mat-label>Facility Number/ Broker Name/ Broker CID</mat-label>
+            <input [(ngModel)]="data.input" [matAutocomplete]="auto" formControlName="input" matInput>
+            <mat-autocomplete #auto="matAutocomplete" autoActiveFirstOption>
+              <mat-option *ngFor="let option of autoFillOptions" [value]="option">{{option}}</mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="dense-3">
+            <mat-label>Business Date</mat-label>
+            <mat-select [(ngModel)]="data.date" formControlName="businessDate">
+              <mat-option *ngFor="let data of businessDates " [value]="data">{{data}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button (click)="search()" color="primary" mat-raised-button style="color: white;">Search</button>
         </div>
-        <ng-template #other>
-          <div class="grid grid-cols-6 gap-4">
-            <ng-container *ngFor="let filter of filters">
-              <div class="flex justify-start" *ngIf="searchForm.value[filter.key]">
-                <p class="font-sans font-bold">{{ filter.header }} :</p>
-                <p class="font-sans">&nbsp;{{searchForm.value[filter.key] }}</p>
-              </div>
-
-            </ng-container>
-          </div>
-        </ng-template>
-      </mat-tab>
-    </mat-tab-group>
-  </div>
+      </div>
+      <ng-template #other>
+        <div class="grid grid-cols-6 gap-4">
+          <ng-container *ngFor="let filter of filters">
+            <div *ngIf="searchForm.value[filter.key]" class="flex justify-start">
+              <p class="font-sans font-bold">{{ filter.header }} :</p>
+              <p class="font-sans">&nbsp;{{searchForm.value[filter.key] }}</p>
+            </div>
+          </ng-container>
+        </div>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+</div>
 <app-template-grid
   *ngIf="dataFetched"
   (export)="export($event)"
@@ -43,5 +42,3 @@
   [gridOptions]="gridOptions"
   [defaultColDef]="defaultColDef"
   [columnDefs]="tabs[selectedTab].columnDefs"></app-template-grid>
-
-
